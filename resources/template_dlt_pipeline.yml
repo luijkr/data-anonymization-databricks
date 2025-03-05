@@ -24,11 +24,6 @@ resources:
         - notebook:
             path: ../notebooks/dlt_ingest.py
 
-      clusters:
-        - label: default
-          num_workers: 1
-          node_type_id: Standard_D4s_v3
-
       configuration:
         wheel_path: ${var.wheel_path}
         table: nyctaxi
