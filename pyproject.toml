@@ -1,6 +1,6 @@
 [project]
 name = "data_anonymization"
-version = "0.1.0"
+version = ""
 description = "Data anonymization using column tags in Databricks"
 authors = [
     { name = "René Luijk", email = "luijk.r@gmail.com" },
