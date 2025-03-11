@@ -6,7 +6,7 @@
 -- DBTITLE 1,Check raw counts for dimensional tables
 WITH
     stats AS (
-        SELECT 
+        SELECT
             (SELECT COUNT(*) FROM ${catalog_name}.${schema_name}.dim_doctors) AS num_docs,
             (SELECT COUNT(*) FROM ${catalog_name}.${schema_name_anonymized}.dim_doctors) AS num_docs_anon,
 
@@ -30,7 +30,7 @@ FROM stats;
 -- DBTITLE 1,Check raw counts for fact tables
 WITH
     stats AS (
-        SELECT 
+        SELECT
             (SELECT COUNT(*) FROM ${catalog_name}.${schema_name}.fact_visits) AS num_visits,
             (SELECT COUNT(*) FROM ${catalog_name}.${schema_name_anonymized}.fact_visits) AS num_visits_anon,
 
@@ -64,7 +64,7 @@ WITH
     ),
 
     stats AS (
-        SELECT 
+        SELECT
             (SELECT num_rows FROM raw) AS num_rows,
             (SELECT num_rows FROM anonymized) AS num_rows_anon
     )
@@ -100,7 +100,7 @@ WITH
     ),
 
     stats AS (
-        SELECT 
+        SELECT
             (SELECT num_rows FROM raw) AS num_rows,
             (SELECT num_rows FROM anonymized) AS num_rows_anon
     )
@@ -128,7 +128,7 @@ WITH
     ),
 
     stats AS (
-        SELECT 
+        SELECT
             (SELECT num_rows FROM raw) AS num_rows,
             (SELECT num_rows FROM anonymized) AS num_rows_anon
     )
