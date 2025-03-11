@@ -1,13 +1,15 @@
 [project]
 name = "data_anonymization"
-version = ""
+version = "0.1"
 description = "Data anonymization using column tags in Databricks"
 authors = [
     { name = "René Luijk", email = "luijk.r@gmail.com" },
 ]
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    
+]
 
 [tool.uv]
 package = true
@@ -30,6 +32,7 @@ dev-dependencies = [
     "pytest>=8.3.3",
     "ruff>=0.7.3",
     "sqlfluff>=3.2.5",
+    "databricks-connect~=16.1",
 ]
 
 [project.scripts]
@@ -168,3 +171,8 @@ template_blocks_indent = false
 
 [tool.sqlfluff.rules.capitalisation.keywords]
 capitalisation_policy = "upper"
+
+[dependency-groups]
+dev = [
+    "ipykernel>=6.29.5",
+]

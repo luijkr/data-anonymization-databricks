@@ -1,0 +1,49 @@
+# The main job for the data-anonymization-databricks pyproject.
+resources:
+  jobs:
+    data_anonymization:
+      name: data_anonymization
+
+      parameters:
+        - name: catalog_name
+          default: "anonymization"
+        - name: schema_name
+          default: "medical"
+        - name: schema_name_anonymized
+          default: "medical_anonymized"
+
+      environments:
+      - environment_key: my_env
+        spec:
+          client: "1"
+          dependencies:
+            - "../dist/*.whl"
+
+      tasks:
+        - task_key: create-tables
+          notebook_task:
+            notebook_path: ../notebooks/create_tables.sql
+
+        - task_key: column-tagging
+          notebook_task:
+            notebook_path: ../notebooks/column_tagging.py
+          depends_on:
+            - task_key: create-tables
+
+        - task_key: generate-data
+          notebook_task:
+            notebook_path: ../notebooks/generate_data.py
+          depends_on:
+            - task_key: column-tagging
+
+        - task_key: anonymize-data
+          notebook_task:
+            notebook_path: ../notebooks/anonymize_data.py
+          depends_on:
+            - task_key: generate-data
+
+        - task_key: validate-results
+          notebook_task:
+            notebook_path: ../notebooks/validate_results.sql
+          depends_on:
+            - task_key: anonymize-data

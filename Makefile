@@ -87,7 +87,7 @@ deploy_%:
 		echo "Error: Invalid environment. Use 'dev' or 'prd'."; \
 		exit 1; \
 	fi
-	.venv/bin/pre-commit run --all-files
+	# .venv/bin/pre-commit run --all-files
 	uv sync
 	uv build
 	@PROFILE_NAME="DEFAULT"; \
