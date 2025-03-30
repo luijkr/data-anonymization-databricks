@@ -1,49 +1,115 @@
-# The main job for the data-anonymization-databricks pyproject.
+# Jobs for the data anonymization project.
 resources:
   jobs:
+
+    setup_production_data:
+      name: setup_production_data
+
+      parameters:
+        - name: catalog_name
+          default: "medical"
+        - name: schema_name
+          default: "visits"
+
+      tasks:
+        # Create the production catalog and schema
+        - task_key: create-production-catalog-schema
+          notebook_task:
+            notebook_path: ../notebooks/setup/create_catalog_schema.sql
+
+        # Create the tables in the production catalog
+        - task_key: create-production-tables
+          notebook_task:
+            notebook_path: ../notebooks/setup/create_tables.sql
+          depends_on:
+            - task_key: create-production-catalog-schema
+
+        # Generate production data
+        - task_key: generate-production-data
+          notebook_task:
+            notebook_path: ../notebooks/setup/generate_data.py
+          depends_on:
+            - task_key: create-production-tables
+
+        # Add column tags to generated production data
+        - task_key: column-tagging
+          notebook_task:
+            notebook_path: ../notebooks/setup/column_tagging.py
+          depends_on:
+            - task_key: generate-production-data
+
+    setup_anonymized_data:
+      name: setup_anonymized_data
+
+      parameters:
+        - name: base_catalog_name
+          default: "medical"
+        - name: schema_name
+          default: "visits"
+
+      tasks:
+        # Create the anonymized catalog and schema
+        - task_key: create-anonymized-catalog-schema
+          notebook_task:
+            notebook_path: ../notebooks/setup/create_catalog_schema.sql
+            base_parameters:
+              catalog_name: "{{ job.parameters.base_catalog_name }}_anonymized"
+
+        # Create the tables in the anonymized catalog
+        - task_key: create-anonymized-tables
+          notebook_task:
+            notebook_path: ../notebooks/setup/create_tables.sql
+            base_parameters:
+              catalog_name: "{{ job.parameters.base_catalog_name }}_anonymized"
+          depends_on:
+            - task_key: create-anonymized-catalog-schema
+
+        # Prevent schema changes in the anonymized catalog
+        - task_key: prevent-schema-changes
+          notebook_task:
+            notebook_path: ../notebooks/setup/prevent_schema_changes.sql
+            base_parameters:
+              catalog_name: "{{ job.parameters.base_catalog_name }}_anonymized"
+          depends_on:
+            - task_key: create-anonymized-tables
+
     data_anonymization:
       name: data_anonymization
 
       parameters:
         - name: catalog_name
-          default: "anonymization"
-        - name: schema_name
           default: "medical"
-        - name: schema_name_anonymized
-          default: "medical_anonymized"
-
-      environments:
-      - environment_key: my_env
-        spec:
-          client: "1"
-          dependencies:
-            - "../dist/*.whl"
+        - name: schema_name
+          default: "visits"
 
       tasks:
-        - task_key: create-tables
-          notebook_task:
-            notebook_path: ../notebooks/create_tables.sql
-
-        - task_key: column-tagging
-          notebook_task:
-            notebook_path: ../notebooks/column_tagging.py
-          depends_on:
-            - task_key: create-tables
-
-        - task_key: generate-data
-          notebook_task:
-            notebook_path: ../notebooks/generate_data.py
-          depends_on:
-            - task_key: column-tagging
-
+        # Anonymize the data
         - task_key: anonymize-data
           notebook_task:
-            notebook_path: ../notebooks/anonymize_data.py
-          depends_on:
-            - task_key: generate-data
+            notebook_path: ../notebooks/anonymization/anonymize_data.py
 
+        # Validate the anonymized data by performing basic checks
         - task_key: validate-results
           notebook_task:
-            notebook_path: ../notebooks/validate_results.sql
+            notebook_path: ../notebooks/validation/validate_results.sql
           depends_on:
             - task_key: anonymize-data
+
+    # Orchestrate the data full anonymization process
+    orchestrate_data_anonymization:
+      name: orchestrate_data_anonymization
+      tasks:
+        - task_key: setup-production-data
+          run_job_task:
+            job_id: ${resources.jobs.setup_production_data.id}
+        
+        - task_key: setup-anonymized-data
+          run_job_task:
+            job_id: ${resources.jobs.setup_anonymized_data.id}
+
+        - task_key: data-anonymization
+          run_job_task:
+            job_id: ${resources.jobs.data_anonymization.id}
+          depends_on:
+            - task_key: setup-production-data
+            - task_key: setup-anonymized-data
