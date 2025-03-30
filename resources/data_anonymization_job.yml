@@ -102,7 +102,7 @@ resources:
         - task_key: setup-production-data
           run_job_task:
             job_id: ${resources.jobs.setup_production_data.id}
-        
+
         - task_key: setup-anonymized-data
           run_job_task:
             job_id: ${resources.jobs.setup_anonymized_data.id}
