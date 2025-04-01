@@ -82,15 +82,6 @@ resources:
           depends_on:
             - task_key: create-anonymized-catalog-schema
 
-        # Prevent schema changes in the anonymized catalog
-        - task_key: prevent-schema-changes
-          notebook_task:
-            notebook_path: ../notebooks/setup/prevent_schema_changes.sql
-            base_parameters:
-              catalog_name: "{{ job.parameters.base_catalog_name }}_anonymized"
-          depends_on:
-            - task_key: create-anonymized-tables
-
     data_anonymization:
       name: data_anonymization
 
