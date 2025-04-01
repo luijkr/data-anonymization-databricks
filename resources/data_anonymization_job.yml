@@ -6,7 +6,7 @@ resources:
       name: setup_production_data
 
       parameters:
-        - name: catalog_name
+        - name: base_catalog_name
           default: "medical"
         - name: schema_name
           default: "visits"
@@ -16,27 +16,45 @@ resources:
         - task_key: create-production-catalog-schema
           notebook_task:
             notebook_path: ../notebooks/setup/create_catalog_schema.sql
+            base_parameters:
+              catalog_name: "{{ job.parameters.base_catalog_name }}"
+
+        # Create the production staging catalog and schema
+        - task_key: create-production-staging-catalog-schema
+          notebook_task:
+            notebook_path: ../notebooks/setup/create_catalog_schema.sql
+            base_parameters:
+              catalog_name: "{{ job.parameters.base_catalog_name }}_anonymized_staging"
 
         # Create the tables in the production catalog
         - task_key: create-production-tables
           notebook_task:
             notebook_path: ../notebooks/setup/create_tables.sql
+            base_parameters:
+              catalog_name: "{{ job.parameters.base_catalog_name }}"
           depends_on:
             - task_key: create-production-catalog-schema
+
 
         # Generate production data
         - task_key: generate-production-data
           notebook_task:
             notebook_path: ../notebooks/setup/generate_data.py
+            base_parameters:
+              catalog_name: "{{ job.parameters.base_catalog_name }}"
           depends_on:
             - task_key: create-production-tables
+
 
         # Add column tags to generated production data
         - task_key: column-tagging
           notebook_task:
             notebook_path: ../notebooks/setup/column_tagging.py
+            base_parameters:
+              catalog_name: "{{ job.parameters.base_catalog_name }}"
           depends_on:
             - task_key: generate-production-data
+
 
     setup_anonymized_data:
       name: setup_anonymized_data
@@ -95,9 +113,17 @@ resources:
           depends_on:
             - task_key: anonymize-data
 
+        # Merge the staging tables into the target tables
+        - task_key: merge-staging-tables
+          notebook_task:
+            notebook_path: ../notebooks/validation/merge_staging_tables.sql
+          depends_on:
+            - task_key: validate-results
+
     # Orchestrate the data full anonymization process
     orchestrate_data_anonymization:
       name: orchestrate_data_anonymization
+
       tasks:
         - task_key: setup-production-data
           run_job_task:

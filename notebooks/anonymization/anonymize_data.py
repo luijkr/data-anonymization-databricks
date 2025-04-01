@@ -118,5 +118,5 @@ for table_name in table_names:
 
     df_anonymized = anonymize_table(df, columns_to_anonymize)
     df_anonymized.write.mode("overwrite").saveAsTable(
-        f"{catalog_name}_anonymized.{schema_name}.{table_name}"
+        f"{catalog_name}_anonymized_staging.{schema_name}.{table_name}"
     )
